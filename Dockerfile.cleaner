@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY scripts ./scripts
+
+ENTRYPOINT ["python", "scripts/clean_datasets.py"]
+CMD ["--input-uri", "/app/input", "--output-uri", "/app/output"]

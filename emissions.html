@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emissions Dashboard - Aurora Renewables</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+            padding: 1.5rem 2rem;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #64ffda;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(100, 255, 218, 0.3);
+            box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card.active {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .stat-card.active::before {
+            opacity: 1;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-unit {
+            font-size: 1rem;
+            color: #64ffda;
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        /* Chart Container */
+        .chart-section {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .time-filter {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+
+        .time-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .time-btn:hover {
+            color: #e2e8f0;
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .time-btn.active {
+            background: #10b981;
+            color: white;
+        }
+
+        #mainChart {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            border-color: rgba(100, 255, 218, 0.3);
+            box-shadow: 0 8px 16px -8px rgba(16, 185, 129, 0.2);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .metric-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .metric-info p {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .metric-chart {
+            width: 100%;
+            height: 200px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(16, 185, 129, 0.3);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .error-icon {
+            font-size: 24px;
+        }
+
+        .error-content h3 {
+            color: #ef4444;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .error-content p {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🌱</div>
+                <div class="logo-text">
+                    <h1>Aurora Renewables</h1>
+                    <p>Emissions Dashboard</p>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="statusText">Loading...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Error Banner (hidden by default) -->
+        <div id="errorBanner" class="error-banner" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <div class="error-content">
+                <h3>Connection Error</h3>
+                <p id="errorMessage">Unable to connect to emissions service</p>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div id="statsGrid" class="stats-grid">
+            <!-- Stats will be dynamically loaded -->
+        </div>
+
+        <!-- Main Chart -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <div>
+                    <h2 class="chart-title" id="chartTitle">Select a metric</h2>
+                    <p class="chart-subtitle" id="chartSubtitle">Click on a metric card above to view details</p>
+                </div>
+                <div class="time-filter">
+                    <button class="time-btn" data-days="1">1D</button>
+                    <button class="time-btn" data-days="7">7D</button>
+                    <button class="time-btn" data-days="30">1M</button>
+                    <button class="time-btn active" data-days="180">6M</button>
+                    <button class="time-btn" data-days="365">1Y</button>
+                    <button class="time-btn" data-days="all">All</button>
+                </div>
+            </div>
+            <div id="mainChart"></div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div id="metricsGrid" class="metrics-grid">
+            <!-- Metric cards will be dynamically loaded -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2025 Aurora Renewables | Real-time Emissions Monitoring System</p>
+        <p>Last updated: <span id="lastUpdate">--</span></p>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://127.0.0.1:8001';
+        
+        // State
+        let currentMetric = null;
+        let metricsData = {};
+        let currentDays = 180; // Default to 6 months
+
+        // Metric configurations
+        const metricConfigs = {
+            travel: {
+                icon: '✈️',
+                color: '#3b82f6',
+                yaxis: ['travel_tco2e', 'total_emissions_kg'],  // Support both historical and realtime
+                label: 'Total CO₂e (tons)'
+            },
+            production: {
+                icon: '🏭',
+                color: '#8b5cf6',
+                yaxis: ['total_emissions_kg'],
+                label: 'Total CO₂e (kg)'
+            },
+            energy: {
+                icon: '⚡',
+                color: '#f59e0b',
+                yaxis: ['total_kwh'],
+                label: 'Total kWh'
+            },
+            water: {
+                icon: '💧',
+                color: '#06b6d4',
+                yaxis: ['total_consumption_liters'],
+                label: 'Total Liters'
+            },
+            air_quality: {
+                icon: '🌫️',
+                color: '#10b981',
+                yaxis: ['aqi_score'],
+                label: 'AQI Score'
+            },
+            energy_mix: {
+                icon: '🔋',
+                color: '#ec4899',
+                yaxis: ['renewable_total_percent'],
+                label: 'Renewable %'
+            },
+            waste: {
+                icon: '♻️',
+                color: '#14b8a6',
+                yaxis: ['recycling_rate_percent'],
+                label: 'Recycling %'
+            }
+        };
+
+        // Initialize
+        async function initialize() {
+            console.log('Initializing emissions dashboard...');
+            await loadMetrics();
+            
+            // Set up time filter buttons
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDays = btn.dataset.days === 'all' ? 'all' : parseInt(btn.dataset.days);
+                    if (currentMetric) {
+                        renderMainChart(currentMetric);
+                    }
+                });
+            });
+
+            // Auto-refresh every 30 seconds
+            setInterval(loadMetrics, 30000);
+        }
+
+        // Load all metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/api/emissions/metrics`);
+                if (!response.ok) throw new Error('Failed to load metrics');
+                
+                const data = await response.json();
+                console.log('Metrics loaded:', data);
+                
+                // Update status
+                document.getElementById('statusText').textContent = 'Live';
+                document.getElementById('errorBanner').style.display = 'none';
+                
+                // Load data for each metric
+                for (const metric of data.metrics) {
+                    if (metric.available) {
+                        await loadMetricData(metric.key);
+                    }
+                }
+                
+                // Render stats grid
+                renderStatsGrid(data.metrics);
+                
+                // Update timestamp
+                if (data.last_refresh) {
+                    const date = new Date(data.last_refresh);
+                    document.getElementById('lastUpdate').textContent = date.toLocaleString();
+                }
+                
+                // Auto-select first metric if none selected
+                if (!currentMetric && data.metrics.length > 0) {
+                    selectMetric(data.metrics[0].key);
+                }
+                
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+                document.getElementById('statusText').textContent = 'Error';
+                document.getElementById('errorBanner').style.display = 'flex';
+                document.getElementById('errorMessage').textContent = error.message;
+            }
+        }
+
+        // Load data for a specific metric
+        async function loadMetricData(metricKey) {
+            try {
+                const response = await fetch(`${API_BASE}/api/emissions/${metricKey}`);
+                if (!response.ok) throw new Error(`Failed to load ${metricKey}`);
+                
+                const data = await response.json();
+                metricsData[metricKey] = data;
+                
+                // Render small chart for this metric
+                renderMetricCard(metricKey, data);
+                
+            } catch (error) {
+                console.error(`Error loading ${metricKey}:`, error);
+            }
+        }
+
+        // Render stats grid
+        function renderStatsGrid(metrics) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = metrics.map(metric => {
+                const config = metricConfigs[metric.key];
+                const data = metricsData[metric.key];
+                
+                let valueDisplay = '--';
+                let changeDisplay = '';
+                
+                if (data && data.data.length > 0) {
+                    const latest = data.data[data.data.length - 1];
+                    const yaxisOptions = Array.isArray(config.yaxis) ? config.yaxis : [config.yaxis];
+                    
+                    // Try each field until we find one that exists
+                    let value = null;
+                    let yaxisField = null;
+                    for (const field of yaxisOptions) {
+                        if (latest[field] !== undefined) {
+                            value = latest[field];
+                            yaxisField = field;
+                            break;
+                        }
+                    }
+                    
+                    if (value !== null) {
+                        valueDisplay = typeof value === 'number' ? value.toFixed(1) : value;
+                        
+                        // Calculate change if we have previous data
+                        if (data.data.length > 1) {
+                            const previous = data.data[data.data.length - 2];
+                            if (previous[yaxisField] !== undefined) {
+                                const change = ((value - previous[yaxisField]) / previous[yaxisField] * 100);
+                                const changeClass = change > 0 ? 'negative' : 'positive';
+                                const arrow = change > 0 ? '↑' : '↓';
+                                changeDisplay = `<div class="stat-change ${changeClass}">${arrow} ${Math.abs(change).toFixed(1)}% from previous</div>`;
+                            }
+                        }
+                    }
+                }
+                
+                return `
+                    <div class="stat-card ${currentMetric === metric.key ? 'active' : ''}" 
+                         data-metric="${metric.key}" 
+                         onclick="selectMetric('${metric.key}', event.target)">
+                        <div class="stat-icon">${config.icon}</div>
+                        <div class="stat-label">${metric.name}</div>
+                        <div class="stat-value">${valueDisplay} <span class="stat-unit">${metric.unit}</span></div>
+                        ${changeDisplay}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select a metric
+        function selectMetric(metricKey, eventTarget = null) {
+            currentMetric = metricKey;
+            
+            // Update active state
+            document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+            
+            // If called from click event, highlight the clicked card
+            if (eventTarget) {
+                eventTarget.closest('.stat-card')?.classList.add('active');
+            } else {
+                // If called programmatically, find and highlight the card by metric key
+                document.querySelectorAll('.stat-card').forEach(card => {
+                    if (card.getAttribute('data-metric') === metricKey) {
+                        card.classList.add('active');
+                    }
+                });
+            }
+            
+            // Update chart
+            renderMainChart(metricKey);
+            
+            // Update title
+            const data = metricsData[metricKey];
+            if (data) {
+                document.getElementById('chartTitle').textContent = data.name;
+                document.getElementById('chartSubtitle').textContent = data.unit;
+            }
+        }
+
+        // Render main chart
+        function renderMainChart(metricKey) {
+            const data = metricsData[metricKey];
+            if (!data || !data.data.length) {
+                document.getElementById('mainChart').innerHTML = '<div class="loading"><div class="spinner"></div><p>No data available</p></div>';
+                return;
+            }
+            
+            const config = metricConfigs[metricKey];
+            let chartData = [...data.data];
+            
+            // Filter by days
+            if (currentDays !== 'all') {
+                chartData = chartData.slice(-currentDays);
+            }
+            
+            // Extract x and y values
+            const xField = chartData[0].date ? 'date' : chartData[0].month ? 'month' : 'quarter';
+            const xValues = chartData.map(d => d[xField]);
+            
+            // Get y values - try each possible field
+            const yaxisOptions = Array.isArray(config.yaxis) ? config.yaxis : [config.yaxis];
+            let yValues = [];
+            let foundField = null;
+            
+            for (const field of yaxisOptions) {
+                if (chartData[0][field] !== undefined) {
+                    yValues = chartData.map(d => d[field] || 0);
+                    foundField = field;
+                    break;
+                }
+            }
+            
+            if (yValues.length === 0) {
+                document.getElementById('mainChart').innerHTML = '<div class="loading"><p>No valid data field found</p></div>';
+                return;
+            }
+            
+            // Create trace
+            const trace = {
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: config.label,
+                line: {
+                    color: config.color,
+                    width: 3,
+                    shape: 'spline'
+                },
+                marker: {
+                    size: 6,
+                    color: config.color,
+                    line: {
+                        color: '#0f172a',
+                        width: 2
+                    }
+                },
+                fill: 'tozeroy',
+                fillcolor: config.color + '20'
+            };
+            
+            // Layout
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(15, 23, 42, 0.5)',
+                font: { color: '#e2e8f0', family: 'Segoe UI' },
+                margin: { l: 60, r: 40, t: 20, b: 60 },
+                xaxis: {
+                    gridcolor: 'rgba(100, 255, 218, 0.1)',
+                    tickfont: { color: '#94a3b8' },
+                    tickangle: -45
+                },
+                yaxis: {
+                    gridcolor: 'rgba(100, 255, 218, 0.1)',
+                    tickfont: { color: '#94a3b8' },
+                    title: { text: config.label, font: { color: '#e2e8f0' } }
+                },
+                hovermode: 'closest',
+                showlegend: false
+            };
+            
+            const config_plotly = {
+                responsive: true,
+                displayModeBar: false
+            };
+            
+            Plotly.newPlot('mainChart', [trace], layout, config_plotly);
+        }
+
+        // Render metric card with small chart
+        function renderMetricCard(metricKey, data) {
+            // This would render individual metric cards in the metrics grid
+            // For now, we're focusing on the main chart and stats
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.cleaner
+      - -t
+      - us-central1-docker.pkg.dev/memory-477122/hackathon/dataset-cleaner:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/memory-477122/hackathon/dataset-cleaner:latest

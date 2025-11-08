@@ -1,0 +1,22 @@
+# Emissions Service - Real-time Data Generator
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir pandas numpy
+
+# Copy the emissions generator script
+COPY scripts/emissions_realtime_generator.py scripts/
+
+# Create output directory
+RUN mkdir -p dataset_realtime/emissions
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run the emissions generator
+ENTRYPOINT ["python", "scripts/emissions_realtime_generator.py"]
