@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EcoSath: Office Dash</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 */
+            /* Prevent scrolling and bouncing on mobile */
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            background-color: #ffffff;
+            /* Give it a subtle border */
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem; /* rounded-xl */
+            cursor: none; /* We will draw a custom cursor/player */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #game-container {
+            width: 100%;
+            max-width: 480px; /* Portrait, mobile-first design */
+            margin: auto;
+        }
+        /* AI Button Style */
+        .btn-gemini {
+            @apply bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold py-2 px-5 rounded-lg shadow-md hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+
+    <div id="game-container" class="relative bg-white rounded-2xl shadow-2xl overflow-hidden p-6">
+        
+        <!-- 1. The Header: Stats -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <span class="text-sm font-semibold text-green-600">Pledge Score</span>
+                <div id="score-text" class="text-3xl font-bold text-green-600">0</div>
+            </div>
+            <div class="text-right">
+                <span class="text-sm font-semibold text-gray-700">Time Left</span>
+                <div id="timer-text" class="text-3xl font-bold text-gray-800">60</div>
+            </div>
+        </div>
+
+        <!-- 2. The CO2 Bar (Corporate Goal) -->
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+                <span class="font-semibold text-red-600 text-sm"><i class="fas fa-smog"></i> Company CO2</span>
+                <span id="co2-text" class="text-sm font-bold text-red-600">0%</span>
+            </div>
+            <div class="w-full bg-red-100 rounded-full h-4 overflow-hidden border border-red-200">
+                <div id="co2-bar" class="bg-red-500 h-full rounded-full transition-all duration-200 ease-linear" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- 3. The Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- 4. Game Over / Start Screen -->
+        <div id="start-screen" class="absolute inset-0 bg-black bg-opacity-75 text-white flex flex-col items-center justify-center p-8 text-center z-10 rounded-2xl">
+            <img src="logo best match.jpg" alt="EcoSath Logo" class="w-24 h-24 rounded-full mb-4">
+            <h2 class="text-4xl font-bold mb-4">EcoSath: Office Dash</h2>
+            <p class="text-lg mb-6">Move your mouse (or finger) to collect <span class="text-green-400">Green Pledges</span> and avoid <span class="text-red-400">Red Waste</span>!</p>
+            <button id="start-button" class="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 text-xl">
+                Start Game
+            </button>
+        </div>
+        
+        <!-- 5. Game Over Screen -->
+        <div id="game-over-screen" class="absolute inset-0 bg-black bg-opacity-80 text-white flex-col items-center justify-center p-8 text-center z-20 rounded-2xl hidden">
+            <h2 id="game-over-title" class="text-4xl font-bold mb-4">Time's Up!</h2>
+            <p class="text-xl mb-2">Final Pledge Score: <span id="final-score" class="font-bold text-green-400">0</span></p>
+            <p class="text-xl mb-6">Company CO2: <span id="final-co2" class="font-bold text-red-400">0%</span></p>
+            
+            <button id="ai-report-button" class="btn-gemini mb-4 w-full">
+                <i class="fas fa-magic-sparkles mr-2"></i> Get My AI Eco-Report ✨
+            </button>
+            <button onclick="restartGame()" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-200 w-full">
+                Play Again
+            </button>
+            
+            <!-- AI Summary Box -->
+            <div id="ai-summary-box" class="text-sm text-purple-200 italic mt-4 p-4 bg-black bg-opacity-20 rounded-lg text-left hidden">
+                <h3 class="font-bold text-white mb-2">✨ AI Eco-Report:</h3>
+                <p id="ai-summary-text">Generating your report...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Gemini API Configuration ---
+        const API_KEY = "AIzaSyD3cwqXYJkZ9oTM0PrZNNzgXHdEsWOLqpE";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`;
+
+        // --- Game Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+
+        // Set canvas size based on container
+        const canvasWidth = gameContainer.clientWidth - 48; // padding
+        const canvasHeight = window.innerHeight * 0.5; // 50% of viewport height
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
+        // --- DOM Elements ---
+        const scoreText = document.getElementById('score-text');
+        const timerText = document.getElementById('timer-text');
+        const co2Text = document.getElementById('co2-text');
+        const co2Bar = document.getElementById('co2-bar');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreText = document.getElementById('final-score');
+        const finalCo2Text = document.getElementById('final-co2');
+        const aiReportButton = document.getElementById('ai-report-button');
+        const aiSummaryBox = document.getElementById('ai-summary-box');
+        const aiSummaryText = document.getElementById('ai-summary-text');
+
+        // --- Game State ---
+        let player, items, score, co2, timer, gameInterval, spawnInterval, timerInterval, gameRunning;
+        let mouseX = canvasWidth / 2;
+
+        const playerSize = 20;
+        const itemSize = 25;
+
+        // --- Game Items (Pledge Emojis) ---
+        // Using emojis for fast, simple, and clear visuals
+        const goodItems = ['♻', '🚲', '🍃', '☕', '🍎']; // Reusable cup, bike, leaf, reusable cup, apple
+        const badItems = ['🥤', '📄', '🍾', '💨', '🛍']; // Disposable cup, paper, plastic bottle, smog, plastic bag
+
+        // --- Player Object ---
+        class Player {
+            constructor(x, y, size, color) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.color = color;
+            }
+
+            draw() {
+                // Draw a simple, stylized person icon
+                ctx.fillStyle = this.color;
+                // Head
+                ctx.beginPath();
+                ctx.arc(this.x, this.y - this.size / 3, this.size / 3, 0, Math.PI * 2);
+                ctx.fill();
+                // Body
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.size / 2, this.y + this.size);
+                ctx.lineTo(this.x + this.size / 2, this.y + this.size);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            update() {
+                // Player follows the mouse/touch X position smoothly
+                this.x += (mouseX - this.x) * 0.1;
+                this.draw();
+            }
+        }
+
+        // --- Item Object ---
+        class Item {
+            constructor(x, y, size, type, emoji) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.type = type; // 'good' or 'bad'
+                this.emoji = emoji;
+                this.speed = Math.random() * 2 + 2; // Random speed
+            }
+
+            draw() {
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+
+            update() {
+                this.y += this.speed;
+                this.draw();
+            }
+        }
+
+        // --- Game Logic ---
+        function initGame() {
+            player = new Player(canvasWidth / 2, canvasHeight - 40, playerSize, '#3b82f6'); // Blue player
+            items = [];
+            score = 0;
+            co2 = 0;
+            timer = 60;
+            gameRunning = false;
+            
+            scoreText.innerText = score;
+            timerText.innerText = timer;
+            co2Text.innerText = `${co2}%`;
+            co2Bar.style.width = `${co2}%`;
+            
+            aiSummaryBox.classList.add('hidden');
+            aiSummaryText.innerText = "Generating your report...";
+            
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+
+            document.getElementById('start-button').onclick = startGame;
+        }
+
+        function startGame() {
+            startScreen.classList.add('hidden');
+            gameRunning = true;
+            
+            // Start game loops
+            gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
+            spawnInterval = setInterval(spawnItem, 800); // New item every 800ms
+            timerInterval = setInterval(updateTimer, 1000); // 1-second timer
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Update player
+            player.update();
+            
+            // Update items
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                item.update();
+
+                // Check for collision with player
+                const dist = Math.hypot(player.x - item.x, (player.y + player.size/2) - item.y);
+                if (dist < player.size / 2 + item.size / 2) {
+                    if (item.type === 'good') {
+                        score += 10;
+                    } else {
+                        co2 = Math.min(100, co2 + 5); // Add 5% CO2
+                    }
+                    items.splice(i, 1); // Remove item on collision
+                    updateStats();
+                }
+                
+                // Remove items that go off-screen
+                if (item.y - item.size > canvasHeight) {
+                    items.splice(i, 1);
+                }
+            }
+        }
+
+        function spawnItem() {
+            if (!gameRunning) return;
+            
+            const x = Math.random() * (canvasWidth - itemSize * 2) + itemSize;
+            const y = -itemSize;
+            
+            let type, emoji;
+            if (Math.random() > 0.4) { // 60% chance of good item
+                type = 'good';
+                emoji = goodItems[Math.floor(Math.random() * goodItems.length)];
+            } else { // 40% chance of bad item
+                type = 'bad';
+                emoji = badItems[Math.floor(Math.random() * badItems.length)];
+            }
+            
+            items.push(new Item(x, y, itemSize, type, emoji));
+        }
+
+        function updateStats() {
+            scoreText.innerText = score;
+            co2Text.innerText = `${co2}%`;
+            co2Bar.style.width = `${co2}%`;
+        }
+
+        function updateTimer() {
+            if (!gameRunning) return;
+            
+            timer--;
+            timerText.innerText = timer;
+            
+            if (timer <= 0) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameInterval);
+            clearInterval(spawnInterval);
+            clearInterval(timerInterval);
+
+            // Show game over screen
+            finalScoreText.innerText = score;
+            finalCo2Text.innerText = `${co2}%`;
+            gameOverScreen.classList.remove('hidden');
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function restartGame() {
+            // Clear all intervals
+            clearInterval(gameInterval);
+            clearInterval(spawnInterval);
+            clearInterval(timerInterval);
+            
+            // Clear items array
+            items = [];
+            
+            // Reset and start
+            initGame();
+        }
+
+        // --- Mouse/Touch Controls ---
+        function movePlayer(e) {
+            let rect = canvas.getBoundingClientRect();
+            let newMouseX;
+            
+            if (e.touches) {
+                // Touch event
+                newMouseX = e.touches[0].clientX - rect.left;
+            } else {
+                // Mouse event
+                newMouseX = e.clientX - rect.left;
+            }
+
+            // Clamp player movement within canvas bounds
+            mouseX = Math.max(playerSize / 2, Math.min(canvasWidth - playerSize / 2, newMouseX));
+            
+            e.preventDefault();
+        }
+        
+        canvas.addEventListener('mousemove', movePlayer);
+        canvas.addEventListener('touchmove', movePlayer, { passive: false });
+
+        // --- Gemini API Call ---
+        aiReportButton.onclick = async () => {
+            aiSummaryBox.classList.remove('hidden');
+            aiSummaryText.innerHTML = "<i>✨ Generating your personalized eco-report...</i>";
+
+            const sysPrompt = "You are a fun, encouraging sustainability coach. A player just finished your 'Office Dash' game. Give them a 2-3 sentence personalized report based on their score. Celebrate their 'Pledge Score' and give them *one actionable, real-world tip* related to their 'Company CO2' score (which represents waste).";
+            const userQuery = `
+                I just played 'Office Dash' and got:
+                - Final Pledge Score: ${score}
+                - Final Company CO2: ${co2}%
+                
+                Please write my personalized eco-report!
+            `;
+            
+            const aiSummary = await callGeminiApi(sysPrompt, userQuery);
+            aiSummaryText.innerHTML = aiSummary;
+        };
+
+        async function callGeminiApi(systemPrompt, userQuery, retries = 3, delay = 1000) {
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!text) {
+                    throw new Error("Invalid response structure from API.");
+                }
+                
+                // Convert Gemini's markdown to simple HTML
+                return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return callGeminiApi(systemPrompt, userQuery, retries - 1, delay * 2);
+                } else {
+                    console.error("Error calling Gemini API:", error);
+                    return "Error: Could not get a response from the AI. Please try again later.";
+                }
+            }
+        }
+        
+        // --- Initialize Game ---
+        initGame();
+
+    </script>
+</body>
+</html>

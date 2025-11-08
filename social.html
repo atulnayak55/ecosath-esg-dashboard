@@ -568,5 +568,22 @@
         // Start the app
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
+    
+    <!-- AI Chat Widget -->
+    <link rel="stylesheet" href="ai-chat-widget.css">
+    <script src="ai-chat-widget.js"></script>
+    <script>
+        // Initialize AI Chat Widget for Social page with LLM service
+        const aiChat = new AIChatWidget({
+            database: 'social',
+            pageContext: 'social',
+            quickQuestions: [
+                'Show me employee wellbeing trends',
+                'What is the diversity ratio?',
+                'Analyze community impact over time',
+                'Show safety incidents by month'
+            ]
+        });
+    </script>
 </body>
 </html>

@@ -771,5 +771,85 @@
         // Start the app
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
+    
+    <!-- AI Chat Widget -->
+    <link rel="stylesheet" href="ai-chat-widget.css">
+    <script src="ai-chat-widget.js"></script>
+    <script>
+        // Initialize AI Chat Widget for Emissions page
+        const aiChat = new AIChatWidget({
+            apiEndpoint: 'http://127.0.0.1:8005/ask',
+            database: 'emissions',
+            pageContext: 'emissions',
+            quickQuestions: [
+                'What is the average AQI?',
+                'Show me energy consumption trends',
+                'What are the production emissions?',
+                'How much waste is recycled?'
+            ]
+        });
+        
+        // Override getPageData to send emissions-specific data with actual metrics
+        aiChat.getPageData = function() {
+            const pageData = {
+                page: 'emissions',
+                dashboard: 'Aurora Renewables - Emissions Monitoring',
+                current_metric: currentMetric,
+                selected_period: selectedPeriod,
+                data_points: window.currentData ? window.currentData.length : 0,
+                metrics_available: [
+                    'travel_emissions',
+                    'production_emissions', 
+                    'energy_consumption',
+                    'air_quality',
+                    'energy_mix',
+                    'waste_management',
+                    'carbon_offset'
+                ]
+            };
+            
+            // Add current data statistics if available
+            if (window.currentData && window.currentData.length > 0) {
+                const values = window.currentData.map(d => d.value);
+                const latestValue = values[values.length - 1];
+                const earliestValue = values[0];
+                const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+                const maxValue = Math.max(...values);
+                const minValue = Math.min(...values);
+                const trend = latestValue > earliestValue ? 'increasing' : 'decreasing';
+                const percentChange = ((latestValue - earliestValue) / earliestValue * 100).toFixed(2);
+                
+                pageData.current_metric_stats = {
+                    metric_name: metricConfigs[currentMetric].title,
+                    metric_unit: metricConfigs[currentMetric].unit,
+                    latest_value: latestValue.toFixed(2),
+                    earliest_value: earliestValue.toFixed(2),
+                    average_value: avgValue.toFixed(2),
+                    max_value: maxValue.toFixed(2),
+                    min_value: minValue.toFixed(2),
+                    trend: trend,
+                    percent_change: percentChange,
+                    data_range: `${window.currentData[0].date} to ${window.currentData[window.currentData.length - 1].date}`
+                };
+            }
+            
+            // Add all metric card values from the dashboard
+            const metricCards = document.querySelectorAll('.metric-card');
+            const currentMetrics = {};
+            metricCards.forEach(card => {
+                const title = card.querySelector('h3')?.textContent;
+                const value = card.querySelector('.metric-value')?.textContent;
+                if (title && value) {
+                    currentMetrics[title] = value;
+                }
+            });
+            
+            if (Object.keys(currentMetrics).length > 0) {
+                pageData.dashboard_metrics = currentMetrics;
+            }
+            
+            return pageData;
+        };
+    </script>
 </body>
 </html>
