@@ -52,13 +52,13 @@ class ChatResponse(BaseModel):
 
 def build_system_context(context: str, page_data: Dict = None) -> str:
     """Build system context based on the page"""
-    base_context = """You are an ESG (Environmental, Social, Governance) AI Assistant for Aurora Renewables, 
+    base_context = """You are an ESG (Environmental, Social, Governance) AI Assistant for EcoSath, 
 a renewable energy company. You help users understand their sustainability metrics, identify trends, 
 and provide actionable insights. Be concise, helpful, and data-driven in your responses."""
 
     context_details = {
         "emissions": """
-        You are analyzing EMISSIONS data from Aurora Renewables' monitoring system.
+        You are analyzing EMISSIONS data from EcoSath' monitoring system.
         Key metrics include:
         - CO2 emissions (tons)
         - Energy consumption (MWh)
@@ -71,7 +71,7 @@ and provide actionable insights. Be concise, helpful, and data-driven in your re
         Provide insights on environmental impact, trends, and sustainability improvements.
         """,
         "social": """
-        You are analyzing SOCIAL IMPACT metrics from Aurora Renewables.
+        You are analyzing SOCIAL IMPACT metrics from EcoSath.
         Key metrics include:
         - Employee wellbeing (satisfaction scores, work-life balance, benefits)
         - Diversity & inclusion (gender diversity, minority representation, pay equity)
@@ -81,7 +81,7 @@ and provide actionable insights. Be concise, helpful, and data-driven in your re
         Provide insights on workforce culture, inclusivity, community engagement, and safety.
         """,
         "governance": """
-        You are analyzing GOVERNANCE metrics from Aurora Renewables.
+        You are analyzing GOVERNANCE metrics from EcoSath.
         Key metrics include:
         - Board composition (independence, diversity, expertise)
         - Compliance metrics (audit score, policy adherence, certifications)

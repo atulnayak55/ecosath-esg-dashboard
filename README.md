@@ -1,10 +1,10 @@
-# 🌍 Aurora Renewables - ESG Dashboard Platform
+# 🌍 EcoSath - ESG Dashboard Platform
 
 ![EcoSath - SFSCON Hackathon 2025](https://img.shields.io/badge/Hackathon-SFSCON%202025-blue)
 ![Status](https://img.shields.io/badge/Status-Complete-success)
 ![AI Powered](https://img.shields.io/badge/AI-Gemini%202.0-purple)
 
-A comprehensive **Environmental, Social, and Governance (ESG)** dashboard platform for Aurora Renewables, featuring AI-powered natural language querying, interactive visualizations, and an educational sustainability game.
+A comprehensive **Environmental, Social, and Governance (ESG)** dashboard platform for EcoSath, featuring AI-powered natural language querying, interactive visualizations, and an educational sustainability game.
 
 ---
 
@@ -27,7 +27,7 @@ A comprehensive **Environmental, Social, and Governance (ESG)** dashboard platfo
 
 ## 🎯 Project Overview
 
-Aurora Renewables ESG Dashboard Platform is an innovative solution that combines:
+EcoSath ESG Dashboard Platform is an innovative solution that combines:
 
 - **📊 Three ESG Pillars**: Emissions, Social Impact, and Governance metrics
 - **🤖 AI-Powered Insights**: Natural language querying using Gemini 2.0 Flash
@@ -640,7 +640,7 @@ class SQLPromptGenerator:
 
 ```
 SYSTEM INSTRUCTION:
-You are an expert SQL analyst for Aurora Renewables ESG data.
+You are an expert SQL analyst for EcoSath ESG data.
 Generate ONLY the SQL query, no explanations.
 
 DATABASE SCHEMA:
