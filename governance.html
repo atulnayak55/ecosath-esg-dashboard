@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Governance Dashboard - Aurora Renewables</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 1.5rem 2rem;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8b5cf6;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(30, 27, 75, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 12px 24px -10px rgba(139, 92, 246, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card.active {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        .stat-card.active::before {
+            opacity: 1;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-unit {
+            font-size: 1rem;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        .stat-subtitle {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .stat-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-top: 0.5rem;
+        }
+
+        .stat-badge.grade-a {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+        }
+
+        .stat-badge.grade-b {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+
+        /* Chart Container */
+        .chart-section {
+            background: rgba(30, 27, 75, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        #mainChart {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+        }
+
+        /* Error State */
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .error-icon {
+            font-size: 24px;
+        }
+
+        .error-content h3 {
+            color: #ef4444;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .error-content p {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">⚖️</div>
+                <div class="logo-text">
+                    <h1>Aurora Renewables</h1>
+                    <p>Governance Dashboard</p>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="statusText">Loading...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Error Banner (hidden by default) -->
+        <div id="errorBanner" class="error-banner">
+            <div class="error-icon">⚠️</div>
+            <div class="error-content">
+                <h3>Connection Error</h3>
+                <p id="errorMessage">Unable to connect to governance service</p>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div id="statsGrid" class="stats-grid">
+            <!-- Stats will be dynamically loaded -->
+        </div>
+
+        <!-- Main Chart -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <div>
+                    <h2 class="chart-title" id="chartTitle">Select a metric</h2>
+                    <p class="chart-subtitle" id="chartSubtitle">Click on a metric card above to view details</p>
+                </div>
+            </div>
+            <div id="mainChart"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2025 Aurora Renewables | Governance Monitoring System</p>
+        <p>Database: SQLite | <span id="lastUpdate">--</span></p>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://127.0.0.1:8003';
+        
+        // State
+        let currentMetric = null;
+        let metricsData = {};
+
+        // Metric configurations
+        const metricConfigs = {
+            board_composition: {
+                icon: '👥',
+                color: '#8b5cf6',
+                charts: [
+                    { field: 'independent_percent', label: 'Independent Directors %', type: 'line' },
+                    { field: 'female_percent', label: 'Female Directors %', type: 'line' }
+                ]
+            },
+            compliance_metrics: {
+                icon: '✓',
+                color: '#10b981',
+                charts: [
+                    { field: 'compliance_rate_percent', label: 'Compliance Rate %', type: 'line' },
+                    { field: 'employee_ethics_training_percent', label: 'Ethics Training %', type: 'line' }
+                ]
+            },
+            esg_ratings: {
+                icon: '⭐',
+                color: '#f59e0b',
+                charts: [
+                    { field: 'overall_esg_score', label: 'Overall ESG Score', type: 'line' },
+                    { field: 'environmental_score', label: 'Environmental Score', type: 'line' },
+                    { field: 'social_score', label: 'Social Score', type: 'line' },
+                    { field: 'governance_score', label: 'Governance Score', type: 'line' }
+                ]
+            },
+            transparency_disclosure: {
+                icon: '📊',
+                color: '#3b82f6',
+                charts: [
+                    { field: 'data_disclosure_completeness_percent', label: 'Data Disclosure %', type: 'line' },
+                    { field: 'verification_percent', label: 'Verified Metrics %', type: 'line' }
+                ]
+            }
+        };
+
+        // Initialize
+        async function initialize() {
+            console.log('Initializing governance dashboard...');
+            await loadMetrics();
+        }
+
+        // Load all metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/api/governance/metrics`);
+                if (!response.ok) throw new Error('Failed to load metrics');
+                
+                const data = await response.json();
+                console.log('Metrics loaded:', data);
+                
+                // Update status
+                document.getElementById('statusText').textContent = 'Live';
+                document.getElementById('errorBanner').style.display = 'none';
+                
+                // Load data for each metric
+                for (const metric of data.metrics) {
+                    if (metric.available) {
+                        await loadMetricData(metric.key);
+                    }
+                }
+                
+                // Render stats grid
+                renderStatsGrid(data.metrics);
+                
+                // Auto-select first metric if none selected
+                if (!currentMetric && data.metrics.length > 0) {
+                    selectMetric(data.metrics[0].key);
+                }
+                
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+                document.getElementById('statusText').textContent = 'Error';
+                document.getElementById('errorBanner').style.display = 'flex';
+                document.getElementById('errorMessage').textContent = error.message;
+            }
+        }
+
+        // Load data for a specific metric
+        async function loadMetricData(metricKey) {
+            try {
+                const response = await fetch(`${API_BASE}/api/governance/${metricKey}`);
+                if (!response.ok) throw new Error(`Failed to load ${metricKey}`);
+                
+                const data = await response.json();
+                metricsData[metricKey] = data;
+                
+            } catch (error) {
+                console.error(`Error loading ${metricKey}:`, error);
+            }
+        }
+
+        // Render stats grid
+        function renderStatsGrid(metrics) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = metrics.map(metric => {
+                const config = metricConfigs[metric.key];
+                const data = metricsData[metric.key];
+                
+                let valueDisplay = '--';
+                let badgeHTML = '';
+                let subtitleText = metric.description;
+                
+                if (data && data.data.length > 0) {
+                    const latest = data.data[data.data.length - 1];
+                    
+                    // Customize display based on metric type
+                    if (metric.key === 'board_composition') {
+                        valueDisplay = latest.independent_percent !== undefined ? 
+                            latest.independent_percent.toFixed(1) + '%' : '--';
+                        subtitleText = `${latest.female_percent?.toFixed(1)}% Female Directors`;
+                    } else if (metric.key === 'compliance_metrics') {
+                        valueDisplay = latest.compliance_rate_percent !== undefined ? 
+                            latest.compliance_rate_percent.toFixed(1) + '%' : '--';
+                        subtitleText = `${latest.regulatory_violations || 0} Violations`;
+                    } else if (metric.key === 'esg_ratings') {
+                        valueDisplay = latest.overall_esg_score !== undefined ? 
+                            latest.overall_esg_score.toFixed(1) : '--';
+                        const grade = latest.esg_grade || 'N/A';
+                        const gradeClass = grade.startsWith('A') ? 'grade-a' : 'grade-b';
+                        badgeHTML = `<span class="stat-badge ${gradeClass}">Grade ${grade}</span>`;
+                        subtitleText = `${latest.esg_risk_rating || 'N/A'} Risk Rating`;
+                    } else if (metric.key === 'transparency_disclosure') {
+                        valueDisplay = latest.data_disclosure_completeness_percent !== undefined ? 
+                            latest.data_disclosure_completeness_percent.toFixed(1) + '%' : '--';
+                        subtitleText = `${latest.verification_percent?.toFixed(1)}% Verified`;
+                    }
+                }
+                
+                return `
+                    <div class="stat-card ${currentMetric === metric.key ? 'active' : ''}" 
+                         data-metric="${metric.key}" 
+                         onclick="selectMetric('${metric.key}', event.target)">
+                        <div class="stat-icon">${config.icon}</div>
+                        <div class="stat-label">${metric.name}</div>
+                        <div class="stat-value">${valueDisplay}</div>
+                        ${badgeHTML}
+                        <div class="stat-subtitle">${subtitleText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select a metric
+        function selectMetric(metricKey, eventTarget = null) {
+            currentMetric = metricKey;
+            
+            // Update active state
+            document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+            
+            if (eventTarget) {
+                eventTarget.closest('.stat-card')?.classList.add('active');
+            } else {
+                document.querySelectorAll('.stat-card').forEach(card => {
+                    if (card.getAttribute('data-metric') === metricKey) {
+                        card.classList.add('active');
+                    }
+                });
+            }
+            
+            // Update chart
+            renderMainChart(metricKey);
+            
+            // Update title
+            const data = metricsData[metricKey];
+            if (data) {
+                document.getElementById('chartTitle').textContent = data.name;
+                document.getElementById('chartSubtitle').textContent = data.description;
+            }
+        }
+
+        // Render main chart
+        function renderMainChart(metricKey) {
+            const data = metricsData[metricKey];
+            if (!data || !data.data.length) {
+                document.getElementById('mainChart').innerHTML = '<div style="text-align:center;padding:4rem;color:#94a3b8;">No data available</div>';
+                return;
+            }
+            
+            const config = metricConfigs[metricKey];
+            const chartData = data.data;
+            
+            // Extract x values (quarter)
+            const xValues = chartData.map(d => d.quarter);
+            
+            // Color palette for multiple traces
+            const colors = ['#8b5cf6', '#a78bfa', '#10b981', '#f59e0b'];
+            
+            // Create traces for each chart defined in config
+            const traces = config.charts.map((chartConfig, index) => {
+                const yValues = chartData.map(d => d[chartConfig.field] || 0);
+                
+                return {
+                    x: xValues,
+                    y: yValues,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: chartConfig.label,
+                    line: {
+                        color: colors[index % colors.length],
+                        width: 3,
+                        shape: 'spline'
+                    },
+                    marker: {
+                        size: 8,
+                        color: colors[index % colors.length]
+                    }
+                };
+            });
+            
+            // Layout
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(15, 23, 42, 0.5)',
+                font: { color: '#e2e8f0', family: 'Segoe UI' },
+                margin: { l: 60, r: 60, t: 20, b: 60 },
+                xaxis: {
+                    gridcolor: 'rgba(139, 92, 246, 0.1)',
+                    tickfont: { color: '#94a3b8' },
+                    tickangle: -45
+                },
+                yaxis: {
+                    gridcolor: 'rgba(139, 92, 246, 0.1)',
+                    tickfont: { color: '#94a3b8' },
+                    title: { 
+                        text: config.charts.length === 1 ? config.charts[0].label : '', 
+                        font: { color: '#e2e8f0' } 
+                    }
+                },
+                hovermode: 'x unified',
+                showlegend: config.charts.length > 1,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    font: { color: '#94a3b8' }
+                }
+            };
+            
+            const config_plotly = {
+                responsive: true,
+                displayModeBar: false
+            };
+            
+            Plotly.newPlot('mainChart', traces, layout, config_plotly);
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>

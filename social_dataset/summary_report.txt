@@ -1,0 +1,16 @@
+============================================================
+AURORA RENEWABLES - SOCIAL IMPACT METRICS
+Year 1 Dataset Summary
+============================================================
+
+Report Generated: 2025-11-08
+Company Age: 12 months
+Metrics Categories: 4
+
+Files Created:
+  - employee_wellbeing_monthly.csv (13 rows)
+  - diversity_inclusion_quarterly.csv (5 rows)
+  - community_impact_quarterly.csv (5 rows)
+  - health_safety_monthly.csv (13 rows)
+
+============================================================

@@ -1,0 +1,77 @@
+
+GOVERNANCE DATASET SUMMARY REPORT
+Generated: 2025-11-08 06:09:50
+Company: Aurora Renewables (1-year-old company)
+Period: Last 5 quarters (1 year + current quarter)
+
+================================
+1. BOARD COMPOSITION
+================================
+Latest Quarter Metrics:
+- Total Directors: 7
+- Independent Directors: 85.7%
+- Female Directors: 42.9%
+- Average Board Attendance: 95.1%
+
+Trend: Steadily improving diversity and independence
+
+================================
+2. COMPLIANCE METRICS
+================================
+Latest Quarter Metrics:
+- Compliance Rate: 92.8%
+- Regulatory Violations: 0
+- Ethics Training Coverage: 94.7%
+
+Trend: Strong improvement in compliance, violations decreasing
+
+================================
+3. ESG RATINGS
+================================
+Latest Quarter Metrics:
+- Overall ESG Score: 75.9/100
+- ESG Grade: A-
+- Environmental Score: 77.7
+- Social Score: 72.6
+- Governance Score: 79.8
+- Industry Percentile: 74.2 (Top 26%)
+- ESG Risk: Low
+- Carbon Disclosure: A-
+
+Trend: Consistent improvement across all ESG dimensions
+
+================================
+4. TRANSPARENCY & DISCLOSURE
+================================
+Latest Quarter Metrics:
+- Data Disclosure Completeness: 92.1%
+- Verified Metrics: 80.0%
+- ESG Report Status: Yes
+- Public Commitments on Track: 95.6%
+
+Trend: Increasing transparency and third-party verification
+
+================================
+FILE SUMMARY
+================================
+Total Files Generated: 4 CSV files + 1 summary report
+Total Data Points: 20 records
+
+Files:
+1. board_composition_quarterly.csv (5 rows)
+2. compliance_metrics_quarterly.csv (5 rows)
+3. esg_ratings_quarterly.csv (5 rows)
+4. transparency_disclosure_quarterly.csv (5 rows)
+
+================================
+INSIGHTS FOR 1-YEAR-OLD COMPANY
+================================
+✅ Strong governance foundation established early
+✅ Board diversity improving quarter-over-quarter
+✅ Compliance rate trending toward excellence (>95%)
+✅ ESG ratings show upward trajectory (B → A-)
+✅ Transparency commitments being met
+⚠️  Early-stage company still building track record
+💡 Positioned well for future ESG leadership
+
+================================
