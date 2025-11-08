@@ -1,0 +1,14 @@
+date,renewable_share,non_renewable_share,source_tag
+2024-11-01,0.363,0.637,synthetic_energy_mix_v1
+2024-12-01,0.395,0.605,synthetic_energy_mix_v1
+2025-01-01,0.376,0.624,synthetic_energy_mix_v1
+2025-02-01,0.324,0.676,synthetic_energy_mix_v1
+2025-03-01,0.288,0.712,synthetic_energy_mix_v1
+2025-04-01,0.299,0.701,synthetic_energy_mix_v1
+2025-05-01,0.353,0.647,synthetic_energy_mix_v1
+2025-06-01,0.395,0.605,synthetic_energy_mix_v1
+2025-07-01,0.38,0.62,synthetic_energy_mix_v1
+2025-08-01,0.319,0.681,synthetic_energy_mix_v1
+2025-09-01,0.287,0.713,synthetic_energy_mix_v1
+2025-10-01,0.302,0.698,synthetic_energy_mix_v1
+2025-11-01,0.34,0.66,synthetic_energy_mix_v1

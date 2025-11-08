@@ -12,8 +12,7 @@ env/
 # VS Code
 .vscode/
 
-# Data files (too large)
-dataset/
+# Data files (too large for Git - keep raw/realtime out)
 dataset_raw/
 dataset_clean/
 dataset_realtime/
