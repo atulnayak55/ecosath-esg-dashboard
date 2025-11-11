@@ -105,8 +105,11 @@
 
     <script>
         // --- Gemini API Configuration ---
-        const API_KEY = "AIzaSyD3cwqXYJkZ9oTM0PrZNNzgXHdEsWOLqpE";
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`;
+        // Note: API key removed for security. To use AI features:
+        // 1. Get your API key from https://makersuite.google.com/app/apikey
+        // 2. Use the LLM service (http://localhost:8005) instead of direct API calls
+        const API_KEY = ""; // REMOVED FOR SECURITY - Use environment variable or backend service
+        const API_URL = API_KEY ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}` : null;
 
         // --- Game Setup ---
         const canvas = document.getElementById('gameCanvas');
